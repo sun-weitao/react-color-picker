@@ -88,16 +88,7 @@ export default class CanvasComponent extends React.Component<CanvasProps, any>
             }
         }
     }
-    setColor = () => {
-        return {
-            showColor: function (color: any) {
-                return this;
-            },
-            colorPanel: function (color: any) {
-                return this;
-            }
-        }
-    }
+
     /**
      * 拾色板移動
      * @param x 
@@ -152,19 +143,22 @@ export default class CanvasComponent extends React.Component<CanvasProps, any>
             let h = (360 * X / elem_width);
             let hsb = {
                 h: Number(h),
-                s: 100,
-                b: 100
+                s: this.state.hsb.s,
+                b: this.state.hsb.b
             }
             this.setState({
                 hsb,
                 slide_btn_left: X
             }, () => {
-                let rgb = this.HSBToRGB(hsb);
+                let rgb = this.HSBToRGB({
+                    h:Number(h),
+                    s:100,
+                    b:100
+                });
                 this.setState({
                     color_panel_bg: `rgba(${rgb.r},${rgb.g},${rgb.b},1)`
-                }, () => {
-                    this.setShowColor();
                 })
+                this.setShowColor();
             })
 
         }
