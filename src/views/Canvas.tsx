@@ -16,12 +16,11 @@ export default class CanvasComponent extends React.Component<CanvasProps, any>
             //滑快移動距離
             slide_btn_left: 0,
             //顏色面板背景色
-            color_panel_bg:'',
-            show_color:'',
+            color_panel_bg: '',
+            show_color: '',
             moved: false,
-            // canvas: this.canvasRef.current,
             colorSlider: this.colorSliderRef.current,
-            bool:false,
+            bool: false,
             //RGB顏色
             rgba: {
                 r: 0,
@@ -29,11 +28,11 @@ export default class CanvasComponent extends React.Component<CanvasProps, any>
                 b: 0,
                 a: 1
             },
-            point:{
-                X:0,
-                Y:0
+            point: {
+                X: 0,
+                Y: 0
             },
-            hsb:{ h: 0, s: 100, b: 100 }
+            hsb: { h: 0, s: 100, b: 100 }
         }
     }
     static defaultProps = {
@@ -43,87 +42,101 @@ export default class CanvasComponent extends React.Component<CanvasProps, any>
     mousemove = (e: any) => {
         let x = e.pageX;
         let y = e.pageY;
-        if(this.state.bool){
-            this.setBar(x); 
-        }else{
-            this.setPostion(x,y);
+        if (this.state.bool) {
+            this.setBar(x);
+        } else {
+            this.setPostion(x, y);
         }
     }
-    mousedown = (e: any,bool:boolean) => {
+    mousedown = (e: any, bool: boolean) => {
         let x = e.pageX;
         let y = e.pageY;
         this.setState({
-            bool:bool
+            bool: bool
         })
-        if(bool){
+        if (bool) {
             this.setBar(x);
-        }else{
-            this.setPostion(x,y);
+        } else {
+            this.setPostion(x, y);
         }
-        document.addEventListener('mousemove',this.mousemove, false)
-        document.addEventListener('mouseup', this.mouseup, false)
+        this.eventListener(true).listener('mousemove', this.mousemove).listener('mouseup', this.mouseup);
     }
-    pointMove = (e:any) => {
+    pointMove = (e: any) => {
         let x = e.pageX;
         let y = e.pageY;
-        this.setPostion(x,y);
+        this.setPostion(x, y);
     }
-    pointerMouseDown = (e:any) => {
+    pointerMouseDown = (e: any) => {
         let x = e.pageX;
         let y = e.pageY;
-        this.setPostion(x,y);
-        document.addEventListener("mousemove",this.pointMove,false);
-        document.addEventListener("mouseup",this.mouseup,false);
+        this.setPostion(x, y);
+        this.eventListener(true).listener('mousemove', this.pointMove).listener('mouseup', this.mouseup);
     }
     mouseup = () => {
-        document.removeEventListener("mousemove", this.mousemove, false)
-        document.removeEventListener("mouseup", this.mouseup, false)
+        this.eventListener(false).listener("mousemove", this.mousemove).listener("mouseup", this.mouseup);
     }
 
+    eventListener = (bool: boolean) => {
+        return {
+            listener: function (type: string, func: any) {
+                if (bool) {
+                    document.addEventListener(type, func, false);
+                } else {
+                    document.removeEventListener(type, func, false)
+                }
+                return this;
+            }
+        }
+    }
+    setColor = () => {
+        return {
+            showColor: function (color: any) {
+                return this;
+            },
+            colorPanel: function (color: any) {
+                return this;
+            }
+        }
+    }
     /**
      * 拾色板移動
      * @param x 
      * @param y 
      */
-    setPostion = (x:number,y:number) => {
-        
+    setPostion = (x: number, y: number) => {
         let elem = (this.colorPanelRef as any).current;
-        if(elem){
+        if (elem) {
             let rect = elem.getBoundingClientRect();
-            let elem_width = elem.clientWidth; 
+            let elem_width = elem.clientWidth;
             let elem_height = elem.offsetHeight;
             let X = Math.max(0, Math.min(x - rect.x, elem_width));
             let Y = Math.max(0, Math.min(y - rect.y, elem_height));
             X -= 9;
             Y -= 9;
+
             this.setState({
-                point:{
-                    X,Y
+                point: {
+                    X, Y
+                },
+                hsb: {
+                    h: this.state.hsb.h,
+                    s: Number(100 * X / elem_width),
+                    b: Number(100 * (elem_height - Y) / elem_height)
                 }
-            })            
-            
-            this.setState({
-                hsb:{
-                    h:this.state.hsb.h,
-                    s:Number(100 * X / elem_width),
-                    b:Number(100 * (elem_height - Y) / elem_height)
-                }
+            }, () => {
+                this.setShowColor();
             })
-            this.setShowColor();
+
         }
     }
     setShowColor = () => {
         let rgb = this.HSBToRGB(this.state.hsb);
         this.setState({
-            rgba:{
-                r:rgb.r,
-                g:rgb.g,
-                b:rgb.b,
-                a:this.state.rgba.a
-            }
-        })
-        this.setState({
-            show_color:`rgba(${rgb.r},${rgb.g},${rgb.b},${this.state.rgba.a})`
+            rgba: {
+                ...rgb,
+                a: this.state.rgba.a
+            },
+            show_color: `rgba(${rgb.r},${rgb.g},${rgb.b},${this.state.rgba.a})`
         })
     }
     /**
@@ -136,30 +149,32 @@ export default class CanvasComponent extends React.Component<CanvasProps, any>
             let rect = elem.getBoundingClientRect();
             let elem_width = elem.offsetWidth;
             let X = Math.max(0, Math.min(x - rect.x, elem_width));
-
             let h = (360 * X / elem_width);
             let hsb = {
-                h:Number(h),
-                s:this.state.hsb.s,
-                b:this.state.hsb.b
+                h: Number(h),
+                s: 100,
+                b: 100
             }
             this.setState({
                 hsb,
                 slide_btn_left: X
+            }, () => {
+                let rgb = this.HSBToRGB(hsb);
+                this.setState({
+                    color_panel_bg: `rgba(${rgb.r},${rgb.g},${rgb.b},1)`
+                }, () => {
+                    this.setShowColor();
+                })
             })
-            let rgb = this.HSBToRGB(this.state.hsb);
-            this.setState({
-                color_panel_bg:`rgba(${rgb.r},${rgb.g},${rgb.b},1)`
-            })
-            this.setShowColor();
+
         }
     }
-    
+
     HSBToRGB = (hsb: any) => {
         let rgb = {
-            r:0,
-            g:0,
-            b:0
+            r: 0,
+            g: 0,
+            b: 0
         }
         var h = Math.round(hsb.h);
         var s = Math.round(hsb.s * 255 / 100);
@@ -197,21 +212,23 @@ export default class CanvasComponent extends React.Component<CanvasProps, any>
         });
         return hex.join('');
     }
+
+
     render() {
         return (
             <div className="canvas">
                 <div className="color-panel"
                     style={{
-                        backgroundColor:this.state.color_panel_bg
+                        backgroundColor: this.state.color_panel_bg
                     }}
                     ref={this.colorPanelRef}
                     onMouseDown={(e) => {
-                        this.mousedown(e,false);
+                        this.mousedown(e, false);
                     }}
-                    >
+                >
                     <div className="pointer" style={{
-                        top:this.state.point.Y,
-                        left:this.state.point.X
+                        top: this.state.point.Y,
+                        left: this.state.point.X
                     }}>
                         <div className="shape1"></div>
                     </div>
@@ -224,7 +241,7 @@ export default class CanvasComponent extends React.Component<CanvasProps, any>
                         width: this.state.color_slider_width
                     }}
                     onMouseDown={(e) => {
-                        this.mousedown(e,true);
+                        this.mousedown(e, true);
                     }}
                 >
                     <div className="slider-btn" style={{
@@ -232,7 +249,7 @@ export default class CanvasComponent extends React.Component<CanvasProps, any>
                     }}></div>
                 </div>
                 <div className="show-color" style={{
-                    backgroundColor:this.state.show_color
+                    backgroundColor: this.state.show_color
                 }}></div>
             </div>
         )
