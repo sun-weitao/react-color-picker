@@ -1,11 +1,11 @@
 import * as React from 'react';
+import { draggable } from '../utils/draggable';
 interface CanvasProps {
     width?: number;
     height?: number;
 }
 export default class CanvasComponent extends React.Component<CanvasProps, any>
 {
-
     private colorSliderRef = React.createRef<HTMLDivElement>();
     private colorPanelRef = React.createRef<HTMLDivElement>();
     constructor(props: CanvasProps) {
@@ -39,56 +39,39 @@ export default class CanvasComponent extends React.Component<CanvasProps, any>
         width: 500,
         height: 300
     }
-    mousemove = (e: any) => {
-        let x = e.pageX;
-        let y = e.pageY;
-        if (this.state.bool) {
-            this.setBar(x);
-        } else {
-            this.setPostion(x, y);
-        }
+    componentDidMount = ():void => {
+        if(!this.colorPanelRef.current || !this.colorSliderRef.current) return;
+        const dragConfig = {
+            drag: (event: MouseEvent | TouchEvent) => {
+              this.handleDrag(event)
+            },
+            end: (event: MouseEvent | TouchEvent) => {
+              this.handleDrag(event)
+            },
+          }
+          const dragConfig2 = {
+            drag: (event: MouseEvent | TouchEvent) => {
+              this.handleDrag2(event)
+            },
+            end: (event: MouseEvent | TouchEvent) => {
+              this.handleDrag2(event)
+            },
+          }
+        draggable(this.colorPanelRef.current,dragConfig);
+        draggable(this.colorSliderRef.current,dragConfig2)
+        this.setBar(0);
     }
-    mousedown = (e: any, bool: boolean) => {
-        let x = e.pageX;
-        let y = e.pageY;
-        this.setState({
-            bool: bool
-        })
-        if (bool) {
-            this.setBar(x);
-        } else {
-            this.setPostion(x, y);
-        }
-        this.eventListener(true).listener('mousemove', this.mousemove).listener('mouseup', this.mouseup);
-    }
-    pointMove = (e: any) => {
-        let x = e.pageX;
-        let y = e.pageY;
+    handleDrag = (event: MouseEvent | TouchEvent) => {
+        if(!this.colorPanelRef.current) return;
+        let x = event.pageX;
+        let y = event.pageY;
         this.setPostion(x, y);
     }
-    pointerMouseDown = (e: any) => {
-        let x = e.pageX;
-        let y = e.pageY;
-        this.setPostion(x, y);
-        this.eventListener(true).listener('mousemove', this.pointMove).listener('mouseup', this.mouseup);
+    handleDrag2 = (event: MouseEvent | TouchEvent) => {
+        if(!this.colorSliderRef.current) return;
+        let x = event.pageX;
+        this.setBar(x);
     }
-    mouseup = () => {
-        this.eventListener(false).listener("mousemove", this.mousemove).listener("mouseup", this.mouseup);
-    }
-
-    eventListener = (bool: boolean) => {
-        return {
-            listener: function (type: string, func: any) {
-                if (bool) {
-                    document.addEventListener(type, func, false);
-                } else {
-                    document.removeEventListener(type, func, false)
-                }
-                return this;
-            }
-        }
-    }
-
     /**
      * 拾色板移動
      * @param x 
@@ -174,14 +157,14 @@ export default class CanvasComponent extends React.Component<CanvasProps, any>
         var s = Math.round(hsb.s * 255 / 100);
         var v = Math.round(hsb.b * 255 / 100);
 
-        if (s == 0) {
+        if (s === 0) {
             rgb.r = rgb.g = rgb.b = v;
         } else {
             var t1 = v;
             var t2 = (255 - s) * v / 255;
             var t3 = (t1 - t2) * (h % 60) / 60;
 
-            if (h == 360) h = 0;
+            if (h === 360) h = 0;
 
             if (h < 60) { rgb.r = t1; rgb.b = t2; rgb.g = t2 + t3 }
             else if (h < 120) { rgb.g = t1; rgb.b = t2; rgb.r = t1 - t3 }
@@ -200,7 +183,7 @@ export default class CanvasComponent extends React.Component<CanvasProps, any>
             rgb.b.toString(16)
         ];
         hex.forEach((str, i) => {
-            if (str.length == 1) {
+            if (str.length === 1) {
                 hex[i] = '0' + str;
             }
         });
@@ -209,6 +192,8 @@ export default class CanvasComponent extends React.Component<CanvasProps, any>
 
 
     render() {
+        const {hsb} = this.state;
+        const hexColorText =  this.rgbToHex(this.HSBToRGB(hsb));
         return (
             <div className="canvas">
                 <div className="color-panel"
@@ -216,9 +201,6 @@ export default class CanvasComponent extends React.Component<CanvasProps, any>
                         backgroundColor: this.state.color_panel_bg
                     }}
                     ref={this.colorPanelRef}
-                    onMouseDown={(e) => {
-                        this.mousedown(e, false);
-                    }}
                 >
                     <div className="pointer" style={{
                         top: this.state.point.Y,
@@ -234,9 +216,7 @@ export default class CanvasComponent extends React.Component<CanvasProps, any>
                     style={{
                         width: this.state.color_slider_width
                     }}
-                    onMouseDown={(e) => {
-                        this.mousedown(e, true);
-                    }}
+                 
                 >
                     <div className="slider-btn" style={{
                         left: this.state.slide_btn_left,
@@ -245,6 +225,9 @@ export default class CanvasComponent extends React.Component<CanvasProps, any>
                 <div className="show-color" style={{
                     backgroundColor: this.state.show_color
                 }}></div>
+                <div className='color-text'>
+                    Hex颜色值：<span>{'#'+hexColorText}</span>
+                </div>
             </div>
         )
     }
