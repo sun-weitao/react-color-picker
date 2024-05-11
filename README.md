@@ -1,4 +1,4 @@
-### react-color-picker
+# react-color-picker
 
 react版的颜色选择器
 
