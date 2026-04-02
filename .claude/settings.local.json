@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(pnpm add:*)",
+      "Bash(taskkill:*)",
+      "Bash(PORT=3001 pnpm start)",
+      "Bash(pnpm start:*)",
+      "Bash(PORT=3003 pnpm start)"
+    ]
+  }
+}
