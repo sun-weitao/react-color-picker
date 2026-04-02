@@ -21,3 +21,15 @@
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+
+# claude
+.claude/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# pnpm
+.pnpm-store/
